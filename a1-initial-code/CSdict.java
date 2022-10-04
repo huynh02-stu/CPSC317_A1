@@ -32,6 +32,8 @@ public class CSdict {
         byte cmdString[] = new byte[MAX_LEN];
 	int len;
 
+	PrintWriter out = null;
+
 	// Verify command line arguments
 	
         if (args.length == PERMITTED_ARGUMENT_COUNT) {
@@ -68,34 +70,26 @@ public class CSdict {
 	    // Remainder of the inputs is the arguments. 
 	    arguments = Arrays.copyOfRange(inputs, 1, inputs.length);
 		
-		/*
-	    System.out.println("The command is: " + command);
-	    len = arguments.length;
-	    System.out.println("The arguments are: ");
-	    for (int i = 0; i < len; i++) {
-		System.out.println("    " + arguments[i]);
-	    }
-	    System.out.println("Done."); 
-		*/
-
-
 		////////////
 
 		switch (command) {
 			case "open": 
 				String hostName = arguments[0];
+				System.out.println(hostName);
 				int portNumber =  Integer.parseInt(arguments[1]);
 
-				Socket echoSocket = new Socket(hostName, portNumber);  
+				Socket echoSocket = new Socket(hostName, portNumber); 
 
-				PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
+				out = new PrintWriter(echoSocket.getOutputStream(), true);
 
-				BufferedReader in =new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
+				BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
 				BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 
-				System.out.println("success with socket implementation");
-				break;
+				String inputLine = in.readLine();
+				System.out.println(inputLine);
+				in.close();
 
+				break;
 			case "dict":
 				System.out.println("command = dict");
 				break;
@@ -106,6 +100,7 @@ public class CSdict {
 				System.out.println("command = define");
 				break;
 			case "match":
+				
 				System.out.println("command = match");
 				break;
 			case "prefixmatch":
@@ -116,14 +111,18 @@ public class CSdict {
 				break;
 			case "quit":
 				System.out.println("command = quit");
+				/*if (out != null) {
+					System.out.println("socket closing");
+					out.close();
+					break;
+				}*/
 				System.exit(-1);
+				break;
 			default :
 				System.out.println("900 Invalid command");
 				break;
 		}
-
-		///////////
-	    
+ 
 	} catch (IOException exception) {
 	System.err.println("998 Input error while reading commands, terminating.");
             System.exit(-1);
