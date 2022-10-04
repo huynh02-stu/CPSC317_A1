@@ -1,3 +1,3 @@
+The upto date version of the assignment is located here.
 
-Put any comments for the markers in this file. If you don't have any comments you can delete the file from your repo.
-
+Personal information is found on bitbucket.
