@@ -29,13 +29,17 @@ public class CSdict {
     private static String[] arguments;
     
     public static void main(String [] args) {
-        byte cmdString[] = new byte[MAX_LEN];
-	int len;
+		int len;
 
-	PrintWriter out = null;
+		Socket dictSocket = null;
+		PrintWriter out = null;
+		BufferedReader in = null;
+		BufferedReader stdIn = null;
+		String inputLine = null;
+		DataInputStream inputDATA = null;
+		DataOutputStream outputDATA = null;
 
-	// Verify command line arguments
-	
+		// Verify command line arguments
         if (args.length == PERMITTED_ARGUMENT_COUNT) {
             debugOn = args[0].equals("-d");
             if (debugOn) {
@@ -49,85 +53,131 @@ public class CSdict {
             return;
         }
 
-	//establishes loop until user leaves	
-	int loopcondition = 0;
+		// establishes loop until user leaves	
+		Boolean loop = true;
 
-	while (loopcondition == 0) {
+		do {
+			// Example code to read command line input and extract arguments.
+			try {
+				System.out.print("csdict> ");
+				byte cmdString[] = new byte[MAX_LEN];
 
-	// Example code to read command line input and extract arguments.
-	
-        try {
-	    System.out.print("csdict> ");
-	    System.in.read(cmdString);
+				System.in.read(cmdString);
 
-	    // Convert the command string to ASII
-	    String inputString = new String(cmdString, "ASCII");
-	    
-	    // Split the string into words
-	    String[] inputs = inputString.trim().split("( |\t)+");
-	    // Set the command
-	    command = inputs[0].toLowerCase().trim();
-	    // Remainder of the inputs is the arguments. 
-	    arguments = Arrays.copyOfRange(inputs, 1, inputs.length);
-		
-		////////////
-
-		switch (command) {
-			case "open": 
-				String hostName = arguments[0];
-				System.out.println(hostName);
-				int portNumber =  Integer.parseInt(arguments[1]);
-
-				Socket echoSocket = new Socket(hostName, portNumber); 
-
-				out = new PrintWriter(echoSocket.getOutputStream(), true);
-
-				BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
-				BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-
-				String inputLine = in.readLine();
-				System.out.println(inputLine);
-				in.close();
-
-				break;
-			case "dict":
-				System.out.println("command = dict");
-				break;
-			case "set":
-				System.out.println("command = set");
-				break;
-			case "define":
-				System.out.println("command = define");
-				break;
-			case "match":
+				// Convert the command string to ASII
+				String inputString = new String(cmdString, "ASCII");
 				
-				System.out.println("command = match");
-				break;
-			case "prefixmatch":
-				System.out.println("command = prefixmatch");
-				break;
-			case "close":
-				System.out.println("command = close");
-				break;
-			case "quit":
-				System.out.println("command = quit");
-				/*if (out != null) {
-					System.out.println("socket closing");
-					out.close();
-					break;
-				}*/
-				System.exit(-1);
-				break;
-			default :
-				System.out.println("900 Invalid command");
-				break;
-		}
- 
-	} catch (IOException exception) {
-	System.err.println("998 Input error while reading commands, terminating.");
-            System.exit(-1);
-	}
+				// Split the string into words
+				String[] inputs = inputString.trim().split("( |\t)+");
 
-    }
+				// Set the command
+				command = inputs[0].toLowerCase().trim();
+				// Remainder of the inputs is the arguments. 
+				arguments = Arrays.copyOfRange(inputs, 1, inputs.length);
+
+				switch (command) {
+					case "quit":
+						//if quit command returns error 900 input 'quit anynumber'.
+						//System.out.println("command = quit");
+						/*if (out != null) {
+							System.out.println("socket closing");
+							out.close();
+							break;
+						}*/
+						System.exit(-1);
+						break;
+					case "open": 
+						String hostName = arguments[0];
+
+						try {
+							Integer.parseInt(arguments[1]);
+						} catch (Exception e) {
+							System.out.println("902 Invalid argument");
+							break;
+						}
+
+						int portNumber = Integer.parseInt(arguments[1]);
+
+						// dictSocket = new Socket(hostName, portNumber); 
+						try {
+							dictSocket = new Socket();
+							int TIMEOUT = 3000;
+							dictSocket.setSoTimeout(TIMEOUT);
+							dictSocket.connect(new InetSocketAddress(hostName, portNumber));
+						} catch (Exception e) {
+							System.out.println("Error... timed out!");
+							break;
+						}
+
+						out = new PrintWriter(dictSocket.getOutputStream(), true);
+						in = new BufferedReader(new InputStreamReader(dictSocket.getInputStream()));
+						
+						stdIn = new BufferedReader(new InputStreamReader(System.in));
+
+						inputLine = in.readLine();
+						System.out.println(inputLine);
+
+						break;
+					case "dict":
+						if (dictSocket == null) {
+							System.out.println("903 Supplied command not expected at this time.");
+							break;
+						} else {
+							//insert SHOW DB command somehow
+							out = new PrintWriter(dictSocket.getOutputStream(), true);
+							String showdb = "SHOW DB";
+
+							// out.write(showdb.toCharArray(), 0, 1000);
+							out.println(showdb);
+
+							String result;
+							// do {
+							inputLine = in.readLine();
+							// 	result += inputLine;
+							// } while (inputLine ...)
+							
+							System.out.println(inputLine);
+
+						}
+						break;
+					case "set":
+					// grabs all dictionaries via show db that match the 2nd argument
+						if (dictSocket == null) {
+							System.out.println("903 Supplied command not expected at this time.");
+						}
+						break;
+					case "define":
+					// based off set, will find word in all selected dictionaries
+						if (dictSocket == null) {
+							System.out.println("903 Supplied command not expected at this time.");
+						}
+						break;
+					case "match":
+					// print all exact matches for word in set dictionaries
+						if (dictSocket == null) {
+							System.out.println("903 Supplied command not expected at this time.");
+						}
+						break;
+					case "prefixmatch":
+					//Retrieve and print all the prefix matches. for WORD. 
+					//WORD is looked up in the dictionary or dictionaries as specified through the set command.
+						if (dictSocket == null) {
+							System.out.println("903 Supplied command not expected at this time.");
+						}
+						break;
+					case "close":
+						if (dictSocket == null) {
+							System.out.println("903 Supplied command not expected at this time.");
+						}
+						break;
+					default :
+						System.out.println("900 Invalid command");
+						break;
+				}
+			} catch (IOException exception) {
+				System.err.println("998 Input error while reading commands, terminating.");
+				System.exit(-1);
+			}
+		} while (loop);
 	}
 }
