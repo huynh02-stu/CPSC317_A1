@@ -38,6 +38,7 @@ public class CSdict {
 		String inputLine = null;
 		DataInputStream inputDATA = null;
 		DataOutputStream outputDATA = null;
+		String setDictionary= "";
 
 		// Verify command line arguments
         if (args.length == PERMITTED_ARGUMENT_COUNT) {
@@ -77,13 +78,11 @@ public class CSdict {
 
 				switch (command) {
 					case "quit":
-						//if quit command returns error 900 input 'quit anynumber'.
-						//System.out.println("command = quit");
-						/*if (out != null) {
-							System.out.println("socket closing");
-							out.close();
+						if (dictSocket == null) {
+							System.exit(-1);
 							break;
-						}*/
+						}
+						out.println("QUIT");
 						System.exit(-1);
 						break;
 					case "open": 
@@ -101,11 +100,11 @@ public class CSdict {
 						// dictSocket = new Socket(hostName, portNumber); 
 						try {
 							dictSocket = new Socket();
-							int TIMEOUT = 3000;
+							int TIMEOUT = 30000;
 							dictSocket.setSoTimeout(TIMEOUT);
 							dictSocket.connect(new InetSocketAddress(hostName, portNumber));
 						} catch (Exception e) {
-							System.out.println("Error... timed out!");
+							System.out.println("920 Control connection to " + hostName + " on port " + portNumber +  " failed to open. ");
 							break;
 						}
 
@@ -126,37 +125,79 @@ public class CSdict {
 							//insert SHOW DB command somehow
 							out = new PrintWriter(dictSocket.getOutputStream(), true);
 							String showdb = "SHOW DB";
-
-							// out.write(showdb.toCharArray(), 0, 1000);
 							out.println(showdb);
 
-							String result;
-							// do {
-							inputLine = in.readLine();
-							// 	result += inputLine;
-							// } while (inputLine ...)
+						//	String result = ""
+							Integer counter = 170; //number of lines to print out everything
+							 do {
+								inputLine = in.readLine();
+							 	//result += inputLine;
+								System.out.println(inputLine);
+								counter = counter - 1;
+							 } while (counter > 1);
 							
-							System.out.println(inputLine);
+
+							//This implementation is neater but doesn't print everything and returns an error
+						//	while ((inputLine = in.readLine()) != null) {
+						//		System.out.println(in.readLine());
+						//	}
+							//System.out.println(inputLine + counter);
 
 						}
 						break;
 					case "set":
-					// grabs all dictionaries via show db that match the 2nd argument
 						if (dictSocket == null) {
 							System.out.println("903 Supplied command not expected at this time.");
+							break;
+						}
+
+						String chosenDict = arguments[0];
+
+						if (chosenDict.equals("*") || chosenDict.equals("")) {
+							setDictionary = "*";
+						} else {
+							setDictionary = chosenDict;
 						}
 						break;
 					case "define":
 					// based off set, will find word in all selected dictionaries
-						if (dictSocket == null) {
+						if ((dictSocket == null) || (setDictionary == "")) {
 							System.out.println("903 Supplied command not expected at this time.");
+							break;					
 						}
+						String chosenWord = arguments[0];
+						out.println("DEFINE " + setDictionary + " " + chosenWord);
+						inputLine = in.readLine();
+						System.out.println(inputLine);
+						/*if (!setDictionary.equals("*")) {
+							if ((inputLine = in.readLine()) == null) {
+								System.out.println("****No definition found****");
+							}
+							while((inputLine = in.readLine()) != null) {
+								System.out.println(in.readLine());
+							}
+							break;	
+						} 
+						out.println("DEFINE " + "*" + " " + chosenWord);
+							if ((inputLine = in.readLine()) == null) {
+								System.out.println("****No matches found****");
+							}
+							while((inputLine = in.readLine()) != null) {
+								System.out.println(in.readLine());
+							} */
 						break;
 					case "match":
 					// print all exact matches for word in set dictionaries
 						if (dictSocket == null) {
 							System.out.println("903 Supplied command not expected at this time.");
 						}
+						chosenWord = arguments[0];
+						out.println("MATCH " + setDictionary + "exact" + chosenWord);
+						inputLine = in.readLine();
+						System.out.println(inputLine);
+						out.println("MATCH " +" * . " + chosenWord);
+						inputLine = in.readLine();
+						System.out.println(inputLine);
 						break;
 					case "prefixmatch":
 					//Retrieve and print all the prefix matches. for WORD. 
@@ -164,11 +205,20 @@ public class CSdict {
 						if (dictSocket == null) {
 							System.out.println("903 Supplied command not expected at this time.");
 						}
+						chosenWord = arguments[0];
+						out.println("MATCH " + setDictionary + "prefix" + chosenWord);
+						inputLine = in.readLine();
+						System.out.println(inputLine);
 						break;
 					case "close":
 						if (dictSocket == null) {
 							System.out.println("903 Supplied command not expected at this time.");
+							break;
 						}
+						out.close();
+						stdIn.close();
+						in.close();
+						dictSocket.close();
 						break;
 					default :
 						System.out.println("900 Invalid command");
@@ -181,3 +231,6 @@ public class CSdict {
 		} while (loop);
 	}
 }
+
+    
+    
