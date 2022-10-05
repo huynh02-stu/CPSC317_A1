@@ -172,12 +172,12 @@ public class CSdict {
 						}
 						chosenWord = arguments[0];
 						if (setDictionary == "") {
-							out.println("MATCH " +" * . " + chosenWord);
+							out.println("MATCH * exact " + chosenWord);
 							while((inputLine = in.readLine()) != ".") {
 								System.out.println(inputLine);
 							} 
 						} else {
-							out.println("MATCH " + setDictionary + "exact" + chosenWord);
+							out.println("MATCH " + setDictionary + " exact " + chosenWord);
 							while((inputLine = in.readLine()) != ".") {
 								System.out.println(inputLine);
 							} 
@@ -190,14 +190,14 @@ public class CSdict {
 							System.out.println("903 Supplied command not expected at this time.");
 						}
 						chosenWord = arguments[0];
-						out.println("MATCH " + setDictionary + "prefix" + chosenWord);
+						out.println("MATCH " + setDictionary + " prefix " + chosenWord);
 						if (setDictionary == "") {
 							out.println("MATCH " + "* " + "prefix " + chosenWord);
 							while((inputLine = in.readLine()) != ".") {
 								System.out.println(inputLine);
 							} 
 						} else {
-							out.println("MATCH " + setDictionary + "prefix" + chosenWord);
+							out.println("MATCH " + setDictionary + " prefix " + chosenWord);
 							while((inputLine = in.readLine()) != ".") {
 								System.out.println(inputLine);
 							} 
